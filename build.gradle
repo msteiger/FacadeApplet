@@ -37,7 +37,6 @@ configurations {
 }
 
 dependencies {
-    compile (group: 'org.lwjgl.lwjgl', name: 'lwjgl_util_applet', version: LWJGL_VERSION)
     compile (group: 'org.terasology.engine', name: 'engine', version: '+')
     modules (group: 'org.terasology.modules', name: 'Core', version: '+')
 }
