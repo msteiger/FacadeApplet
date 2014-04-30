@@ -726,6 +726,7 @@ public class AppletLoader extends Applet implements Runnable, AppletStub {
 
 		// jars to load
 		String jarList = getParameter("al_jars");
+		String moduleList = getParameter("modules");
 		String nativeJarList = null;
 		
 		String osName = System.getProperty("os.name");
@@ -794,7 +795,10 @@ public class AppletLoader extends Applet implements Runnable, AppletStub {
 		int jarCount = jars.countTokens();
 		nativeJarCount = nativeJars.countTokens();
 		
-		urlList = new URL[jarCount+nativeJarCount];
+		StringTokenizer mods = new StringTokenizer(moduleList, ", ");
+		
+		int moduleCount = mods.countTokens();
+        urlList = new URL[jarCount+nativeJarCount+moduleCount];
 
 		URL path = getCodeBase();
 
@@ -806,6 +810,10 @@ public class AppletLoader extends Applet implements Runnable, AppletStub {
 		for (int i = jarCount; i < jarCount+nativeJarCount; i++) {
 			urlList[i] = new URL(path, nativeJars.nextToken());
 		}
+
+		for (int i = jarCount+nativeJarCount; i < jarCount+nativeJarCount+moduleCount; i++) {
+            urlList[i] = new URL(path, "modules/" + mods.nextToken());
+        }
 	}
 
 	/**
@@ -1185,32 +1193,33 @@ public class AppletLoader extends Applet implements Runnable, AppletStub {
 		classLoader = new URLClassLoader(urls) {
 			protected PermissionCollection getPermissions (CodeSource codesource) {
 				PermissionCollection perms = null;
-
-				try {
-                    // no permissions
-                    perms = new Permissions();
-
-                    // if certificates match the AppletLoader certificates then we should be all set
-                    if (certificatesMatch(certs, codesource.getCertificates())) {
-                        perms.add(new AllPermission());
-                        return perms;
-                    }
-
-					String host = getCodeBase().getHost();
-			        if (host != null && (host.length() > 0)) {
-			        	// add permission for downloaded jars to access host they were from
-			        	perms.add(new SocketPermission(host, "connect,accept"));
-			        }
-			        else if ( "file".equals(codesource.getLocation().getProtocol()) ) {
-			        	// if running locally add file permission
-			        	String path = codesource.getLocation().getFile().replace('/', File.separatorChar);
-			            perms.add(new FilePermission(path, "read"));
-			        }
-
-		        } catch (Exception e) {
-					e.printStackTrace();
-				}
-
+//
+//				try {
+//                    // no permissions
+//                    perms = new Permissions();
+//
+//                    // if certificates match the AppletLoader certificates then we should be all set
+//                    if (certificatesMatch(certs, codesource.getCertificates())) {
+//                        perms.add(new AllPermission());
+//                        return perms;
+//                    }
+//
+//					String host = getCodeBase().getHost();
+//			        if (host != null && (host.length() > 0)) {
+//			        	// add permission for downloaded jars to access host they were from
+//			        	perms.add(new SocketPermission(host, "connect,accept"));
+//			        }
+//			        else if ( "file".equals(codesource.getLocation().getProtocol()) ) {
+//			        	// if running locally add file permission
+//			        	String path = codesource.getLocation().getFile().replace('/', File.separatorChar);
+//			            perms.add(new FilePermission(path, "read"));
+//			        }
+//
+//		        } catch (Exception e) {
+//					e.printStackTrace();
+//				}
+				perms = new Permissions();
+				perms.add(new AllPermission());
 		        return perms;
 		    }
 			
@@ -1873,21 +1882,21 @@ public class AppletLoader extends Applet implements Runnable, AppletStub {
 	 * @return true if the certificate chains are the same
 	 */
 	protected static boolean certificatesMatch(Certificate[] certs1, Certificate[] certs2) throws Exception {
-		if (certs1 == null || certs2 == null) {
-			return false;
-		}
-		
-		if (certs1.length != certs2.length) {
-			System.out.println("Certificate chain differs in length [" + certs1.length + " vs " + certs2.length + "]!");
-			return false;
-		}
-		
-		for (int i = 0; i < certs1.length; i++) {
-			if (!certs1[i].equals(certs2[i])) {
-				System.out.println("Certificate mismatch found!");
-				return false;
-			}
-		}
+//		if (certs1 == null || certs2 == null) {
+//			return false;
+//		}
+//		
+//		if (certs1.length != certs2.length) {
+//			System.out.println("Certificate chain differs in length [" + certs1.length + " vs " + certs2.length + "]!");
+//			return false;
+//		}
+//		
+//		for (int i = 0; i < certs1.length; i++) {
+//			if (!certs1[i].equals(certs2[i])) {
+//				System.out.println("Certificate mismatch found!");
+//				return false;
+//			}
+//		}
 		
 		return true;
 	}
@@ -1898,21 +1907,21 @@ public class AppletLoader extends Applet implements Runnable, AppletStub {
 	 * @return - certificate chain of AppletLoader
 	 */
 	protected static Certificate[] getCurrentCertificates() throws Exception {
-		// get the current certificate to compare against native files
-		Certificate[] certificate = AppletLoader.class.getProtectionDomain().getCodeSource().getCertificates();
-		
-		// workaround for bug where cached applet loader does not have certificates!?
-		if (certificate == null) {
-			URL location = AppletLoader.class.getProtectionDomain().getCodeSource().getLocation();
+//		// get the current certificate to compare against native files
+//		Certificate[] certificate = AppletLoader.class.getProtectionDomain().getCodeSource().getCertificates();
+//		
+//		// workaround for bug where cached applet loader does not have certificates!?
+//		if (certificate == null) {
+//			URL location = AppletLoader.class.getProtectionDomain().getCodeSource().getLocation();
+//
+//			// manually load the certificate
+//			JarURLConnection jurl = (JarURLConnection) (new URL("jar:" + location.toString() + "!/org/lwjgl/util/applet/AppletLoader.class").openConnection());
+//			jurl.setDefaultUseCaches(true);
+//			certificate = jurl.getCertificates();
+//			jurl.setDefaultUseCaches(false);
+//		}
 
-			// manually load the certificate
-			JarURLConnection jurl = (JarURLConnection) (new URL("jar:" + location.toString() + "!/org/lwjgl/util/applet/AppletLoader.class").openConnection());
-			jurl.setDefaultUseCaches(true);
-			certificate = jurl.getCertificates();
-			jurl.setDefaultUseCaches(false);
-		}
-		
-		return certificate;
+		return new Certificate[0];
 	}
 	
 	/**

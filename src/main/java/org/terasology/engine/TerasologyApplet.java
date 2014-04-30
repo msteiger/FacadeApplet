@@ -79,7 +79,7 @@ public final class TerasologyApplet extends Applet {
             throw new RuntimeException("Failed to start applet - could not obtain home path.", e);
         }
         logger = LoggerFactory.getLogger(TerasologyApplet.class);
-        obtainModules();
+//        obtainModules();
         startGame();
     }
 
